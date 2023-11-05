@@ -26,10 +26,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #define LOG_TAG "AGM: session"
 
@@ -1616,19 +1612,15 @@ int session_obj_rw_acdb_params_with_tag(
     memcpy((uint8_t *)tckv.kv, acdb_param->blob,
                 tckv.num_kvs*sizeof(struct agm_key_value));
     ptr = acdb_param->blob + tckv.num_kvs * sizeof(struct agm_key_value);
-    AGM_LOGV("blob_size = %d", acdb_param->blob_size);
     actual_size = acdb_param->blob_size -
                         acdb_param->num_kvs * sizeof(struct agm_key_value);
-    for (int f = 0; f < actual_size; f++) {
-        AGM_LOGV("%d blob data is 0x%x", f, ptr[f]);
-    }
     if (acdb_param->isTKV) {
-        AGM_LOGI("%s: TKV param to ACDB.\n", __func__);
+        AGM_LOGD("%s: TKV param to ACDB.\n", __func__);
         ret = graph_set_tag_data_to_acdb(&merged_metadata->gkv,
                                 acdb_param->tag, &tckv,
                                 ptr, actual_size);
     } else {
-        AGM_LOGI("%s: CKV param to ACDB.\n", __func__);
+        AGM_LOGD("%s: CKV param to ACDB.\n", __func__);
         ret = graph_set_cal_data_to_acdb(&merged_metadata->gkv,
                                     &tckv, ptr, actual_size);
     }
@@ -1641,27 +1633,6 @@ free_metadata:
     }
 error:
     pthread_mutex_unlock(&sess_obj->lock);
-
-    return ret;
-}
-
-int session_dummy_rw_acdb_tunnel(
-                             void *payload, bool is_param_set)
-{
-    int ret = 0;
-    uint8_t enable_flag = 1;
-
-    AGM_LOGD("enter");
-    ret = graph_enable_acdb_persistence(enable_flag);
-    if (ret) {
-        AGM_LOGE("Error: graph_enable_acdb_persistence failed. ret = %d\n", ret);
-        return ret;
-    }
-
-    if (is_param_set)
-        ret = graph_set_acdb_param(payload);
-
-    AGM_LOGD("exit status=%d", ret);
 
     return ret;
 }
@@ -1851,19 +1822,6 @@ done:
     }
 
     pthread_mutex_unlock(&sess_obj->lock);
-    return ret;
-}
-
-int session_dummy_get_tag_with_module_info(struct agm_key_vector_gsl *gkv,
-                                         void *payload, size_t *size)
-{
-    int ret = 0;
-
-    ret = graph_get_tags_with_module_info(gkv, payload, size);
-    if (ret) {
-        AGM_LOGE("Error getting tag with module info from graph");
-    }
-
     return ret;
 }
 
@@ -2358,10 +2316,8 @@ int session_obj_read(struct session_obj *sess_obj, void *buff, size_t *count)
         AGM_LOGE("Cannot issue read in state:%d\n",
                            sess_obj->state);
         ret = -EINVAL;
-        pthread_mutex_unlock(&sess_obj->lock);
         goto done;
     }
-    pthread_mutex_unlock(&sess_obj->lock);
 
     buffer.timestamp = 0x0;
     buffer.flags = 0;
@@ -2374,6 +2330,7 @@ int session_obj_read(struct session_obj *sess_obj, void *buff, size_t *count)
     }
 
 done:
+    pthread_mutex_unlock(&sess_obj->lock);
     return ret;
 }
 
@@ -2387,10 +2344,8 @@ int session_obj_write(struct session_obj *sess_obj, void *buff, size_t *count)
         AGM_LOGE("Cannot issue write in state:%d\n",
                             sess_obj->state);
         ret = -EINVAL;
-        pthread_mutex_unlock(&sess_obj->lock);
         goto done;
     }
-    pthread_mutex_unlock(&sess_obj->lock);
 
     buffer.timestamp = 0x0;
     buffer.flags = 0;
@@ -2403,6 +2358,7 @@ int session_obj_write(struct session_obj *sess_obj, void *buff, size_t *count)
     }
 
 done:
+    pthread_mutex_unlock(&sess_obj->lock);
     return ret;
 }
 
@@ -2648,16 +2604,16 @@ int session_obj_write_with_metadata(struct session_obj *sess_obj,
         AGM_LOGE("Cannot issue write in state:%d\n",
                             sess_obj->state);
         ret = -EINVAL;
-        pthread_mutex_unlock(&sess_obj->lock);
         goto done;
     }
-    pthread_mutex_unlock(&sess_obj->lock);
+
     ret = graph_write(sess_obj->graph, buffer, consumed_size);
     if (ret) {
         AGM_LOGE("Error:%d writing to graph\n", ret);
     }
 
 done:
+    pthread_mutex_unlock(&sess_obj->lock);
     return ret;
 }
 
@@ -2671,10 +2627,8 @@ int session_obj_read_with_metadata(struct session_obj *sess_obj,
         AGM_LOGE("Cannot issue read in state:%d\n",
                            sess_obj->state);
         ret = -EINVAL;
-        pthread_mutex_unlock(&sess_obj->lock);
         goto done;
     }
-    pthread_mutex_unlock(&sess_obj->lock);
 
     size_t read_size;
     ret = graph_read(sess_obj->graph, buffer, &read_size);
@@ -2685,6 +2639,7 @@ int session_obj_read_with_metadata(struct session_obj *sess_obj,
     *captured_size = (uint32_t)read_size;
 
 done:
+    pthread_mutex_unlock(&sess_obj->lock);
     return ret;
 }
 
