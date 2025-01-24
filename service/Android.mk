@@ -6,8 +6,6 @@ LOCAL_VENDOR_MODULE         := true
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/inc/public
 include $(BUILD_HEADER_LIBRARY)
 
-ifneq ($(QCPATH),)
-
 # Build libagm
 include $(CLEAR_VARS)
 
@@ -73,6 +71,4 @@ LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 endif
 
 include $(BUILD_SHARED_LIBRARY)
-
-endif
 
