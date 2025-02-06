@@ -6,8 +6,6 @@ LOCAL_VENDOR_MODULE         := true
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/inc/public
 include $(BUILD_HEADER_LIBRARY)
 
-ifneq ($(QCPATH),)
-
 # Build libagm
 include $(CLEAR_VARS)
 
@@ -16,10 +14,16 @@ LOCAL_MODULE_OWNER  := qti
 LOCAL_MODULE_TAGS   := optional
 LOCAL_VENDOR_MODULE := true
 
+ifeq ($(SOONG_CONFIG_android_hardware_audio_run_64bit), true)
+LOCAL_MULTILIB := 64
+endif
+
 LOCAL_CFLAGS        := -D_ANDROID_
 LOCAL_CFLAGS        += -Wno-tautological-compare -Wno-macro-redefined -Wall
 LOCAL_CFLAGS        += -D_GNU_SOURCE -DACDB_PATH=\"/vendor/etc/acdbdata/\"
 LOCAL_CFLAGS        += -DACDB_DELTA_FILE_PATH="/data/vendor/audio/acdbdata/delta"
+LOCAL_CFLAGS        += -Wno-incompatible-pointer-types
+LOCAL_CFLAGS        += -Wno-pointer-integer-compare
 
 LOCAL_C_INCLUDES    := $(LOCAL_PATH)/inc/public
 LOCAL_C_INCLUDES    += $(LOCAL_PATH)/inc/private
@@ -73,6 +77,4 @@ LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 endif
 
 include $(BUILD_SHARED_LIBRARY)
-
-endif
 
